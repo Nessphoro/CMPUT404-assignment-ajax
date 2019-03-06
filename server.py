@@ -20,9 +20,9 @@
 # remember to:
 #     pip install flask
 
-
+from collections import defaultdict
 import flask
-from flask import Flask, request
+from flask import Flask, jsonify, redirect, request, send_from_directory
 import json
 app = Flask(__name__)
 app.debug = True
@@ -37,19 +37,22 @@ class World:
     def __init__(self):
         self.clear()
         
-    def update(self, entity, key, value):
-        entry = self.space.get(entity,dict())
-        entry[key] = value
+    def update(self, entity, data):
+        entry = self.space[enity]
+        entry = {**entry, **data}
         self.space[entity] = entry
 
     def set(self, entity, data):
         self.space[entity] = data
 
     def clear(self):
-        self.space = dict()
+        self.space = defaultdict(dict)
+
+    def merge(self, world):
+        self.space = {**self.space, **world}
 
     def get(self, entity):
-        return self.space.get(entity,dict())
+        return self.space[entity]
     
     def world(self):
         return self.space
@@ -74,27 +77,40 @@ def flask_post_json():
 @app.route("/")
 def hello():
     '''Return something coherent here.. perhaps redirect to /static/index.html '''
-    return None
+    return redirect("/static/index.html")
 
 @app.route("/entity/<entity>", methods=['POST','PUT'])
 def update(entity):
     '''update the entities via this interface'''
-    return None
+    data = flask_post_json()
+    if request.method == "POST":
+        myWorld.update(entity, data)
+    else:
+        myWorld.set(entity, data)
+    return jsonify(myWorld.get(entity))
 
 @app.route("/world", methods=['POST','GET'])    
 def world():
     '''you should probably return the world here'''
-    return None
+    if request.method == "POST":
+        data = flask_post_json()
+        myWorld.merge(data)
+    return jsonify(myWorld.space)
 
 @app.route("/entity/<entity>")    
 def get_entity(entity):
     '''This is the GET version of the entity interface, return a representation of the entity'''
-    return None
+    return jsonify(myWorld.get(entity))
 
 @app.route("/clear", methods=['POST','GET'])
 def clear():
     '''Clear the world out!'''
-    return None
+    myWorld.clear()
+    return jsonify(myWorld.space)
+
+@app.route("/static/<path:path>")
+def send_static(path):
+    return send_from_directory("static", path)
 
 if __name__ == "__main__":
     app.run()
