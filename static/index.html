@@ -269,7 +269,8 @@
                 world = await getWorld();
             }
             else {
-                world = await updateWorld(world);
+                let newworld = await updateWorld(world);
+                world = {...newworld, ...world};
                 dirty = false;
             }
             
