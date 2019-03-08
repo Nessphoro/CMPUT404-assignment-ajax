@@ -13,5 +13,6 @@ ENV LANGUAGE en_US:en
 ENV LC_ALL en_US.UTF-8     
 USER me
 WORKDIR /home/me
-RUN git clone https://github.com/Nessphoro/CMPUT404-assignment-ajax malynin
+ADD --chown=me . /home/me/malynin
+# RUN git clone https://github.com/Nessphoro/CMPUT404-assignment-ajax malynin
 CMD bash -c "cd /home/me/malynin && python3 freetests.py"

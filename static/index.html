@@ -25,7 +25,6 @@
         var W = canvas.width = window.innerWidth - 6;
         var H = canvas.height = window.innerHeight - 50;
 
-        let dirty = false;
         world = {};
 
         //XXX: TODO Make this prettier!
@@ -96,10 +95,10 @@
             }
         }
 
-        async function updateWorld(world) {
-            let rdata = await fetch(`/world`, {
-                method: "POST",
-                body: JSON.stringify(world),
+        async function putEntity(entity) {
+            let rdata = await fetch(`/entity/${entity}`, {
+                method: "PUT",
+                body: JSON.stringify(world[entity]),
                 headers: {
                     "Content-Type": "application/json"
                 },
@@ -115,14 +114,12 @@
 
         function addEntity(name, data) {
             world[name] = data;
-            dirty = true;
-            // updateEntity(name, data);
+            putEntity(name, data);
         }
 
         function addPointTo(name, x, y) {
             world[name].path.push([x, y]);
-            dirty = true;
-            // updateEntity(name, world[name]);
+            putEntity(name, world[name]);
         }
 
         // canvas + mouse/touch is complicated 
@@ -251,11 +248,14 @@
         let entityName = undefined;
         mouse.mousedowners.push(function (x, y, clicked, e) {
             entityName = `X${Math.random()}`;
-            addEntity(entityName, { 'x': x, 'y': y, 'colour': hslToHex(Math.random(), Math.random(), Math.random()), path: [] });
+            console.log(`Created ${entityName}`);
+            addEntity(entityName, { 'x': x, 'y': y, 'colour': hslToHex(Math.random(), Math.random(), Math.random() * 0.5), path: [] });
         });
 
         mouse.mouseuppers.push(function (x, y, clicked, e) {
-            // addEntityWithoutName({'x':x,'y':y,'colour':'red'}); 
+            // updateWorld({
+            //     entityName: world[entityName]
+            // });
         });
 
         mouse.mousedraggers.push(function (x, y, clicked, e) {
@@ -265,20 +265,16 @@
         });
 
         async function update() {
-            if(!dirty) {
-                world = await getWorld();
-            }
-            else {
-                let newworld = await updateWorld(world);
-                world = {...newworld, ...world};
-                dirty = false;
-            }
-            
+            let newworld = await getWorld();
+            world = {...newworld, ...world};
             renderFrame();
-            requestAnimationFrame(update);
+            // requestAnimationFrame(update);
         }
 
-        requestAnimationFrame(update);
+        // requestAnimationFrame(update);
+        setInterval((r) => {
+            update()
+        }, 1000 / 30.0);
     </script>
     </body>
 
